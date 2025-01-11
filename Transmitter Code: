@@ -1,0 +1,49 @@
+#include <Wire.h>
+#include <MPU6050.h>
+#include <VirtualWire.h>
+
+MPU6050 mpu;
+
+void setup() {
+    Serial.begin(9600);
+    Wire.begin();
+
+    // Initialize MPU6050
+    mpu.initialize();
+    if (!mpu.testConnection()) {
+        Serial.println("MPU6050 connection failed!");
+        while (1);
+    }
+    Serial.println("MPU6050 initialized.");
+
+    // Initialize RF Transmitter
+    vw_set_tx_pin(10); // Set the RF transmitter pin
+    vw_setup(2000);    // Set RF communication speed (2000 bps)
+    Serial.println("Transmitter setup complete.");
+}
+
+void loop() {
+    int16_t ax, ay, az;
+    mpu.getAcceleration(&ax, &ay, &az);
+
+    String command = "";
+
+    // Interpret gestures based on accelerometer data
+    if (ay > 15000)
+        command = "FORWARD";
+    else if (ay < -15000)
+        command = "BACKWARD";
+    else if (ax > 15000)
+        command = "LEFT";
+    else if (ax < -15000)
+        command = "RIGHT";
+    else
+        command = "STOP";
+
+    // Transmit the command
+    vw_send((uint8_t *)command.c_str(), command.length());
+    vw_wait_tx(); // Wait until the message is fully sent
+
+    Serial.println("Command sent: " + command);
+    delay(100); // Reduced delay for better responsiveness
+}
