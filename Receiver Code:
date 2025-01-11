@@ -1,0 +1,95 @@
+#include <VirtualWire.h> // Include the VirtualWire library
+
+// Motor Control Pins
+#define IN1 3 // Input 1 for Motor A (Left side)
+#define IN2 4 // Input 2 for Motor A (Left side)
+#define IN3 5 // Input 3 for Motor B (Right side)
+#define IN4 6 // Input 4 for Motor B (Right side)
+
+void setup() {
+    // Initialize serial communication
+    Serial.begin(9600);
+
+    // Configure motor control pins as outputs
+    pinMode(IN1, OUTPUT);
+    pinMode(IN2, OUTPUT);
+    pinMode(IN3, OUTPUT);
+    pinMode(IN4, OUTPUT);
+
+    // Initialize RF Receiver
+    vw_set_rx_pin(11);  // Set the RF receiver pin
+    vw_setup(2000);     // Set RF communication speed (2000 bps)
+    vw_rx_start();      // Start the receiver
+
+    Serial.println("Setup complete, waiting for commands...");
+}
+
+void loop() {
+    uint8_t buf[VW_MAX_MESSAGE_LEN];
+    uint8_t buflen = VW_MAX_MESSAGE_LEN;
+
+    // Check for received messages
+    if (vw_get_message(buf, &buflen)) {
+        String command = "";
+        for (int i = 0; i < buflen; i++) {
+            command += (char)buf[i];
+        }
+
+        // Display received command
+        Serial.println("Command received: " + command);
+
+        // Execute motor actions based on the command
+        if (command == "FORWARD") {
+            moveForward();
+        } else if (command == "BACKWARD") {
+            moveBackward();
+        } else if (command == "LEFT") {
+            turnLeft();
+        } else if (command == "RIGHT") {
+            turnRight();
+        } else {
+            stopMotors();
+        }
+    }
+}
+
+// Motor control functions
+void moveForward() {
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, HIGH);
+    digitalWrite(IN3, HIGH);
+    digitalWrite(IN4, LOW);
+    Serial.println("Moving forward");
+}
+
+void moveBackward() {
+    digitalWrite(IN1, HIGH);
+    digitalWrite(IN2, LOW);
+    digitalWrite(IN3, LOW);
+    digitalWrite(IN4, HIGH);
+    Serial.println("Moving backward");
+}
+
+void turnLeft() {
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, HIGH);
+    digitalWrite(IN3, LOW);
+    digitalWrite(IN4, HIGH);
+    Serial.println("Turning left");
+}
+
+void turnRight() {
+    digitalWrite(IN1, HIGH);
+    digitalWrite(IN2, LOW);
+    digitalWrite(IN3, HIGH);
+    digitalWrite(IN4, LOW);
+    Serial.println("Turning right");
+}
+
+void stopMotors() {
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, LOW);
+    digitalWrite(IN3, LOW);
+    digitalWrite(IN4, LOW);
+    Serial.println("Motors stopped");
+}
